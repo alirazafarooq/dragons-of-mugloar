@@ -21,6 +21,7 @@ interface Mission {
   probability: string
 }
 
+const API_BASE_URL = 'http://localhost:8080/api'
 const STORAGE_KEY = 'mugloar-game'
 
 const game = ref<GameState | null>(null)
@@ -30,6 +31,82 @@ const error = ref('')
 const missions = ref<Mission[]>([])
 const missionsLoading = ref(false)
 const missionsError = ref('')
+
+// Check that a value is a JSON object.
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return (
+      typeof value === 'object' &&
+      value !== null &&
+      !Array.isArray(value)
+  )
+}
+
+// Validate game data received from an API or localStorage.
+function isGameState(value: unknown): value is GameState {
+  if (!isRecord(value)) {
+    return false
+  }
+
+  return (
+      typeof value.gameId === 'string' &&
+      value.gameId.length > 0 &&
+      typeof value.lives === 'number' &&
+      Number.isFinite(value.lives) &&
+      typeof value.gold === 'number' &&
+      Number.isFinite(value.gold) &&
+      typeof value.level === 'number' &&
+      Number.isFinite(value.level) &&
+      typeof value.score === 'number' &&
+      Number.isFinite(value.score) &&
+      typeof value.highScore === 'number' &&
+      Number.isFinite(value.highScore) &&
+      typeof value.turn === 'number' &&
+      Number.isFinite(value.turn)
+  )
+}
+
+// Validate every mission received from the API.
+function isMission(value: unknown): value is Mission {
+  if (!isRecord(value)) {
+    return false
+  }
+
+  return (
+      typeof value.adId === 'string' &&
+      value.adId.length > 0 &&
+      typeof value.message === 'string' &&
+      typeof value.reward === 'number' &&
+      Number.isFinite(value.reward) &&
+      typeof value.expiresIn === 'number' &&
+      Number.isFinite(value.expiresIn) &&
+      (typeof value.encrypted === 'string' ||
+          value.encrypted === null) &&
+      typeof value.probability === 'string'
+  )
+}
+
+// Read the structured error message returned by Spring Boot.
+async function getApiErrorMessage(response: Response): Promise<string> {
+  const fallback =
+      `Request failed with HTTP ${response.status}` +
+      (response.statusText ? ` (${response.statusText})` : '')
+
+  try {
+    const body: unknown = await response.json()
+
+    if (
+        isRecord(body) &&
+        typeof body.message === 'string' &&
+        body.message.trim().length > 0
+    ) {
+      return `${fallback}: ${body.message}`
+    }
+  } catch {
+    // The response wasn't JSON. Use the fallback message.
+  }
+
+  return fallback
+}
 
 // Restore the saved game after a browser refresh.
 onMounted(() => {
@@ -42,19 +119,9 @@ onMounted(() => {
   try {
     const parsed: unknown = JSON.parse(savedGame)
 
-    if (
-        typeof parsed === 'object' &&
-        parsed !== null &&
-        'gameId' in parsed &&
-        typeof parsed.gameId === 'string' &&
-        parsed.gameId.length > 0 &&
-        'lives' in parsed &&
-        typeof parsed.lives === 'number' &&
-        'gold' in parsed &&
-        typeof parsed.gold === 'number'
-    ) {
-      game.value = parsed as GameState
-      void loadMissions(game.value.gameId)
+    if (isGameState(parsed)) {
+      game.value = parsed
+      void loadMissions(parsed.gameId)
     } else {
       localStorage.removeItem(STORAGE_KEY)
     }
@@ -69,29 +136,31 @@ async function startGame() {
   error.value = ''
 
   try {
-    const response = await fetch('http://localhost:8080/api/games', {
+    const response = await fetch(`${API_BASE_URL}/games`, {
       method: 'POST',
     })
 
     if (!response.ok) {
-      throw new Error(`Server returned ${response.status}`)
+      throw new Error(await getApiErrorMessage(response))
     }
 
-    const newGame = await response.json() as GameState
+    const data: unknown = await response.json()
 
-    game.value = newGame
+    if (!isGameState(data)) {
+      throw new Error(
+          'The backend returned an invalid game state.'
+      )
+    }
 
-    localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(newGame)
-    )
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+    game.value = data
 
-    // Load missions for the newly started game.
-    await loadMissions(newGame.gameId)
+    // Automatically load missions for this game.
+    await loadMissions(data.gameId)
   } catch (e) {
     error.value = e instanceof Error
-        ? `${e.name}: ${e.message}`
-        : String(e)
+        ? e.message
+        : 'An unexpected error occurred while starting the game.'
 
     console.error('Start game failed:', e)
   } finally {
@@ -99,7 +168,7 @@ async function startGame() {
   }
 }
 
-// Retrieve missions through our Spring Boot backend.
+// Retrieve and validate missions through our backend.
 async function loadMissions(gameId: string) {
   missionsLoading.value = true
   missionsError.value = ''
@@ -107,24 +176,26 @@ async function loadMissions(gameId: string) {
 
   try {
     const response = await fetch(
-        `http://localhost:8080/api/games/${encodeURIComponent(gameId)}/messages`
+        `${API_BASE_URL}/games/${encodeURIComponent(gameId)}/messages`
     )
 
     if (!response.ok) {
-      throw new Error(`Server returned ${response.status}`)
+      throw new Error(await getApiErrorMessage(response))
     }
 
     const data: unknown = await response.json()
 
-    if (!Array.isArray(data)) {
-      throw new Error('The missions API returned an unexpected response.')
+    if (!Array.isArray(data) || !data.every(isMission)) {
+      throw new Error(
+          'The backend returned invalid mission data.'
+      )
     }
 
-    missions.value = data as Mission[]
+    missions.value = data
   } catch (e) {
     missionsError.value = e instanceof Error
         ? e.message
-        : String(e)
+        : 'An unexpected error occurred while loading missions.'
 
     console.error('Loading missions failed:', e)
   } finally {
@@ -132,13 +203,14 @@ async function loadMissions(gameId: string) {
   }
 }
 
-function refreshMissions() {
-  if (game.value) {
+// Retry only when loading missions fails.
+function retryMissions() {
+  if (game.value && !missionsLoading.value) {
     void loadMissions(game.value.gameId)
   }
 }
 
-// End the local session by removing the saved game.
+// End the local session.
 function endGame() {
   localStorage.removeItem(STORAGE_KEY)
 
@@ -169,7 +241,7 @@ function endGame() {
       </button>
     </header>
 
-    <section v-if="error" class="error-message">
+    <section v-if="error" class="error-message" role="alert">
       {{ error }}
     </section>
 
@@ -183,7 +255,6 @@ function endGame() {
         <span class="status">In progress</span>
       </div>
 
-      <!-- Game statistics -->
       <div class="stats-grid">
         <article class="stat-card">
           <span>❤️ Lives</span>
@@ -218,7 +289,6 @@ function endGame() {
 
       <p class="game-id">Game ID: {{ game.gameId }}</p>
 
-      <!-- Missions -->
       <section class="missions-section">
         <div class="missions-heading">
           <div>
@@ -227,16 +297,25 @@ function endGame() {
           </div>
         </div>
 
-        <p v-if="missionsLoading" class="mission-message-state">
+        <p
+            v-if="missionsLoading"
+            class="mission-message-state"
+            role="status"
+        >
           Looking for available missions...
         </p>
 
-        <div v-else-if="missionsError" class="error-message">
+        <div
+            v-else-if="missionsError"
+            class="error-message"
+            role="alert"
+        >
           <p>Could not load missions: {{ missionsError }}</p>
 
           <button
               class="start-button"
-              @click="refreshMissions"
+              :disabled="missionsLoading"
+              @click="retryMissions"
           >
             Try Again
           </button>
@@ -257,7 +336,11 @@ function endGame() {
           >
             <div class="mission-card-heading">
               <span class="mission-label">MISSION</span>
-              <span v-if="mission.encrypted" class="mission-encrypted">
+
+              <span
+                  v-if="mission.encrypted"
+                  class="mission-encrypted"
+              >
                 Encrypted
               </span>
             </div>

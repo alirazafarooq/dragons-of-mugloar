@@ -58,6 +58,12 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- Provides Bean Validation support for validating request inputs using annotations such as @Pattern, @NotNull, and @Size. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+
 	</dependencies>
 
 	<build>

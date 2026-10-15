@@ -19,6 +19,7 @@ import com.example.mugloar.model.Mission;
 import java.util.List;
 
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
@@ -68,5 +69,14 @@ class GameControllerTest {
                 .andExpect(jsonPath("$[0].probability")
                         .value("Walk in the park"));
     }
+
+    @Test
+    void getMessagesRejectsInvalidGameId() throws Exception {
+        mockMvc.perform(get("/api/games/invalid!id/messages"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(gameApiClient);
+    }
+
 
 }

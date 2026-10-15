@@ -16,6 +16,13 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
+import org.springframework.http.HttpStatus;
+import com.example.mugloar.service.GameApiException;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
+
 class GameApiClientMessagesTest {
 
     private MockRestServiceServer mockServer;
@@ -91,4 +98,32 @@ class GameApiClientMessagesTest {
 
         mockServer.verify();
     }
+
+    @Test
+    void getMessagesMapsExternalServerErrorToBadGateway() {
+        mockServer.expect(
+                        requestTo(
+                                "https://dragonsofmugloar.com/api/v2/S1efis2P/messages"
+                        )
+                )
+                .andRespond(withServerError());
+
+        GameApiException exception = assertThrows(
+                GameApiException.class,
+                () -> gameApiClient.getMessages("S1efis2P")
+        );
+
+        assertEquals(
+                HttpStatus.BAD_GATEWAY,
+                exception.getStatus()
+        );
+
+        assertEquals(
+                "External game service returned an unexpected response.",
+                exception.getMessage()
+        );
+
+        mockServer.verify();
+    }
+
 }
