@@ -5,6 +5,9 @@ import com.example.mugloar.model.GameState;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import com.example.mugloar.model.Mission;
+import org.springframework.core.ParameterizedTypeReference;
+import java.util.List;
 
 @Service
 public class GameApiClient {
@@ -26,4 +29,13 @@ public class GameApiClient {
                 .retrieve()
                 .body(GameState.class);
     }
+
+
+    public List<Mission> getMessages(String gameId) {
+        return restClient.get()
+                .uri("/{gameId}/messages", gameId)
+                .retrieve()
+                .body(new ParameterizedTypeReference<List<Mission>>() {});
+    }
+
 }

@@ -141,3 +141,122 @@ h1 span {
   background: #351f27;
   color: #ffb7b7;
 }
+
+
+/* Missions section */
+.missions-section {
+  margin-top: 2.5rem;
+}
+
+.missions-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.missions-heading h2 {
+  margin-top: 0.25rem;
+}
+
+.mission-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.mission-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  min-width: 0;
+}
+
+.mission-card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.mission-label,
+.mission-encrypted {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.mission-label {
+  opacity: 0.7;
+}
+
+.mission-encrypted {
+  padding: 0.3rem 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+}
+
+.mission-description {
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.mission-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.mission-details span,
+.mission-probability span {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.mission-details strong,
+.mission-probability strong {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.mission-reward {
+  font-size: 1.1rem;
+}
+
+.mission-probability {
+  padding: 0.75rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.mission-id {
+  margin-top: auto;
+  font-size: 0.75rem;
+  opacity: 0.6;
+  overflow-wrap: anywhere;
+}
+
+.mission-message-state {
+  padding: 1.5rem 0;
+  opacity: 0.8;
+}
+
+.end-game-button {
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 600px) {
+  .missions-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

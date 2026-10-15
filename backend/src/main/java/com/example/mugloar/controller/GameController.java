@@ -10,6 +10,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.example.mugloar.model.Mission;
+import io.swagger.v3.oas.annotations.Parameter;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/games")
@@ -47,4 +52,31 @@ public class GameController {
     public GameState startGame() {
         return gameApiClient.startGame();
     }
+
+
+    @GetMapping("/{gameId}/messages")
+    @Operation(
+            summary = "Get available missions",
+            description = """
+        Retrieves the missions currently available for the specified game.
+        Each mission includes its identifier, description, reward,
+        expiration time, encryption status, and estimated probability.
+        """
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Missions retrieved successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "An error occurred while retrieving missions"
+            )
+    })
+    public List<Mission> getMessages(
+            @Parameter(description = "ID of the active game", example = "S1efis2P")
+            @PathVariable String gameId) {
+        return gameApiClient.getMessages(gameId);
+    }
+
 }
