@@ -19,6 +19,9 @@ import org.springframework.web.client.RestClientResponseException;
 import java.util.List;
 import java.util.function.Supplier;
 
+import com.example.mugloar.model.ShopItem;
+import com.example.mugloar.model.ShopPurchaseResult;
+
 @Service
 public class GameApiClient {
 
@@ -176,5 +179,43 @@ public class GameApiClient {
                     ex
             );
         }
+    }
+
+    public List<ShopItem> getShopItems(String gameId) {
+        List<ShopItem> items = callExternalApi(
+                "retrieve shop items",
+                () -> restClient.get()
+                        .uri("/{gameId}/shop", gameId)
+                        .retrieve()
+                        .body(new ParameterizedTypeReference<List<ShopItem>>() {})
+        );
+
+        if (items == null) {
+            throw new GameApiException(
+                    HttpStatus.BAD_GATEWAY,
+                    "External game service returned an empty shop response."
+            );
+        }
+
+        return items;
+    }
+
+    public ShopPurchaseResult buyItem(String gameId, String itemId) {
+        ShopPurchaseResult result = callExternalApi(
+                "purchase shop item",
+                () -> restClient.post()
+                        .uri("/{gameId}/shop/buy/{itemId}", gameId, itemId)
+                        .retrieve()
+                        .body(ShopPurchaseResult.class)
+        );
+
+        if (result == null) {
+            throw new GameApiException(
+                    HttpStatus.BAD_GATEWAY,
+                    "External game service returned an empty purchase response."
+            );
+        }
+
+        return result;
     }
 }

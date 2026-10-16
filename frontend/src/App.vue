@@ -6,6 +6,7 @@ import GameDashboard from './components/GameDashboard.vue'
 import MissionList from './components/MissionList.vue'
 import MissionOutcome from './components/MissionOutcome.vue'
 import { useGame } from './composables/useGame'
+import ShopPanel from './components/ShopPanel.vue'
 
 const {
   game,
@@ -24,6 +25,13 @@ const {
   retryMissions,
   clearError,
   endGame,
+  shopItems,
+  shopLoading,
+  buyingItemId,
+  shopError,
+  shopMessage,
+  buyItem,
+  retryShop,
 } = useGame()
 
 onMounted(() => {
@@ -79,6 +87,18 @@ function handleSolveMission(adId: string) {
           :solving-mission-id="solvingMissionId"
           @solve="handleSolveMission"
           @retry="retryMissions"
+      />
+
+      <ShopPanel
+          :items="shopItems"
+          :loading="shopLoading"
+          :error="shopError"
+          :message="shopMessage"
+          :buying-item-id="buyingItemId"
+          :gold="game.gold"
+          :disabled="isGameOver || loading || solvingMissionId !== null"
+          @buy="buyItem"
+          @retry="retryShop"
       />
     </section>
   </main>

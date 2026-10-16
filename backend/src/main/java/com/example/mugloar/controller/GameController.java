@@ -19,6 +19,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.mugloar.model.ShopItem;
+import com.example.mugloar.model.ShopPurchaseResult;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
@@ -153,6 +156,59 @@ public class GameController {
             String adId
     ) {
         return gameApiClient.solveMission(gameId, adId);
+    }
+
+    @GetMapping("/{gameId}/shop")
+    @Operation(
+            summary = "Get shop items",
+            description = "Retrieves the available items and their costs."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Shop items retrieved successfully"),
+            @ApiResponse(responseCode = "400", description = "Game ID has an invalid format"),
+            @ApiResponse(responseCode = "404", description = "Game was not found"),
+            @ApiResponse(responseCode = "502", description = "External game service returned an unexpected response"),
+            @ApiResponse(responseCode = "503", description = "External game service is unavailable")
+    })
+    public List<ShopItem> getShopItems(
+            @PathVariable
+            @Pattern(
+                    regexp = "^[A-Za-z0-9_-]{1,64}$",
+                    message = "Game ID must contain only letters, digits, underscores, or hyphens and be 1–64 characters long."
+            )
+            String gameId
+    ) {
+        return gameApiClient.getShopItems(gameId);
+    }
+
+    @PostMapping("/{gameId}/shop/buy/{itemId}")
+    @Operation(
+            summary = "Buy a shop item",
+            description = "Attempts to purchase an item using the game's available gold."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Purchase attempt processed successfully"),
+            @ApiResponse(responseCode = "400", description = "Game ID or item ID has an invalid format"),
+            @ApiResponse(responseCode = "404", description = "Game or item was not found"),
+            @ApiResponse(responseCode = "502", description = "External game service returned an unexpected response"),
+            @ApiResponse(responseCode = "503", description = "External game service is unavailable")
+    })
+    public ShopPurchaseResult buyItem(
+            @PathVariable
+            @Pattern(
+                    regexp = "^[A-Za-z0-9_-]{1,64}$",
+                    message = "Game ID must contain only letters, digits, underscores, or hyphens and be 1–64 characters long."
+            )
+            String gameId,
+
+            @PathVariable
+            @Pattern(
+                    regexp = "^[A-Za-z0-9_-]{1,64}$",
+                    message = "Item ID must contain only letters, digits, underscores, or hyphens and be 1–64 characters long."
+            )
+            String itemId
+    ) {
+        return gameApiClient.buyItem(gameId, itemId);
     }
 
 }

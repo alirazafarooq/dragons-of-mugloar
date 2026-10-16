@@ -2,27 +2,25 @@
 package com.example.mugloar.controller;
 
 import com.example.mugloar.model.GameState;
+import com.example.mugloar.model.Mission;
+import com.example.mugloar.model.MissionSolveResult;
+import com.example.mugloar.model.ShopItem;
+import com.example.mugloar.model.ShopPurchaseResult;
 import com.example.mugloar.service.GameApiClient;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import com.example.mugloar.model.Mission;
-import com.example.mugloar.model.MissionSolveResult;
 
 import java.util.List;
 
-import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(GameController.class)
 class GameControllerTest {
@@ -94,9 +92,7 @@ class GameControllerTest {
         when(gameApiClient.solveMission("S1efis2P", "N0SjIYKD"))
                 .thenReturn(result);
 
-        mockMvc.perform(
-                        post("/api/games/S1efis2P/solve/N0SjIYKD")
-                )
+        mockMvc.perform(post("/api/games/S1efis2P/solve/N0SjIYKD"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message")
@@ -108,6 +104,45 @@ class GameControllerTest {
                 .andExpect(jsonPath("$.turn").value(1));
     }
 
+    @Test
+    void getShopReturnsAvailableItems() throws Exception {
+        List<ShopItem> items = List.of(
+                new ShopItem("hpot", "Healing potion", 50),
+                new ShopItem("cs", "Claw Sharpening", 100)
+        );
 
+        when(gameApiClient.getShopItems("S1efis2P"))
+                .thenReturn(items);
 
+        mockMvc.perform(get("/api/games/S1efis2P/shop"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value("hpot"))
+                .andExpect(jsonPath("$[0].name").value("Healing potion"))
+                .andExpect(jsonPath("$[0].cost").value(50))
+                .andExpect(jsonPath("$[1].id").value("cs"))
+                .andExpect(jsonPath("$[1].cost").value(100));
+    }
+
+    @Test
+    void buyShopItemReturnsPurchaseResult() throws Exception {
+        ShopPurchaseResult result = new ShopPurchaseResult(
+                true,
+                50,
+                3,
+                0,
+                1
+        );
+
+        when(gameApiClient.buyItem("S1efis2P", "hpot"))
+                .thenReturn(result);
+
+        mockMvc.perform(post("/api/games/S1efis2P/shop/buy/hpot"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.shoppingSuccess").value(true))
+                .andExpect(jsonPath("$.gold").value(50))
+                .andExpect(jsonPath("$.lives").value(3))
+                .andExpect(jsonPath("$.level").value(0))
+                .andExpect(jsonPath("$.turn").value(1));
+    }
 }

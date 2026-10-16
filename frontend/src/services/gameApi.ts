@@ -1,6 +1,7 @@
 
 import type { GameState } from '../types/game'
 import type { Mission, MissionSolveResult } from '../types/mission'
+import type { ShopItem, ShopPurchaseResult } from '../types/shop'
 
 const API_BASE_URL = '/api'
 
@@ -109,4 +110,38 @@ export const gameApi = {
             isSolveResult,
         )
     },
+
+    getShopItems(gameId: string): Promise<ShopItem[]> {
+        return request(
+            `/games/${encodeURIComponent(gameId)}/shop`,
+            {},
+            (value): value is ShopItem[] =>
+                Array.isArray(value) &&
+                value.every(
+                    (item) =>
+                        isRecord(item) &&
+                        typeof item.id === 'string' &&
+                        typeof item.name === 'string' &&
+                        typeof item.cost === 'number',
+                ),
+        )
+    },
+
+    buyItem(
+        gameId: string,
+        itemId: string,
+    ): Promise<ShopPurchaseResult> {
+        return request(
+            `/games/${encodeURIComponent(gameId)}/shop/buy/${encodeURIComponent(itemId)}`,
+            { method: 'POST' },
+            (value): value is ShopPurchaseResult =>
+                isRecord(value) &&
+                typeof value.shoppingSuccess === 'boolean' &&
+                typeof value.gold === 'number' &&
+                typeof value.lives === 'number' &&
+                typeof value.level === 'number' &&
+                typeof value.turn === 'number',
+        )
+    },
+
 }

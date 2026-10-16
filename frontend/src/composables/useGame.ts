@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { gameApi } from '../services/gameApi'
 import type { GameState } from '../types/game'
 import type { Mission, MissionSolveResult } from '../types/mission'
+import type { ShopItem, ShopPurchaseResult } from '../types/shop'
 
 const STORAGE_KEY = 'mugloar-game'
 
@@ -37,10 +38,18 @@ function readSavedGame(): GameState | null {
 export function useGame() {
     const game = ref<GameState | null>(readSavedGame())
     const missions = ref<Mission[]>([])
+    const shopItems = ref<ShopItem[]>([])
+
     const loading = ref(false)
     const missionsLoading = ref(false)
+    const shopLoading = ref(false)
+    const buyingItemId = ref<string | null>(null)
+
     const error = ref('')
     const missionsError = ref('')
+    const shopError = ref('')
+    const shopMessage = ref('')
+
     const solvingMissionId = ref<string | null>(null)
     const missionOutcome = ref<MissionSolveResult | null>(null)
     const missionActionError = ref('')
@@ -80,13 +89,35 @@ export function useGame() {
         }
     }
 
+    async function loadShopItems(gameId: string): Promise<void> {
+        if (!game.value || game.value.gameId !== gameId || game.value.lives <= 0) {
+            shopItems.value = []
+            return
+        }
+
+        shopLoading.value = true
+        shopError.value = ''
+
+        try {
+            shopItems.value = await gameApi.getShopItems(gameId)
+        } catch (cause) {
+            shopError.value =
+                cause instanceof Error ? cause.message : 'Could not load shop items.'
+        } finally {
+            shopLoading.value = false
+        }
+    }
+
     async function startGame(): Promise<void> {
         loading.value = true
         error.value = ''
         missionsError.value = ''
+        shopError.value = ''
+        shopMessage.value = ''
         missionActionError.value = ''
         missionOutcome.value = null
         missions.value = []
+        shopItems.value = []
         game.value = null
 
         try {
@@ -94,7 +125,10 @@ export function useGame() {
             game.value = newGame
 
             if (newGame.lives > 0) {
-                await loadMissions(newGame.gameId)
+                await Promise.all([
+                    loadMissions(newGame.gameId),
+                    loadShopItems(newGame.gameId),
+                ])
             }
         } catch (cause) {
             error.value =
@@ -114,6 +148,7 @@ export function useGame() {
         solvingMissionId.value = mission.adId
         missionOutcome.value = null
         missionActionError.value = ''
+        shopMessage.value = ''
 
         try {
             const result: MissionSolveResult = await gameApi.solveMission(
@@ -135,10 +170,15 @@ export function useGame() {
             missionOutcome.value = result
 
             if (result.lives > 0) {
-                await loadMissions(gameId)
+                await Promise.all([
+                    loadMissions(gameId),
+                    loadShopItems(gameId),
+                ])
             } else {
                 missions.value = []
+                shopItems.value = []
                 missionsError.value = ''
+                shopError.value = ''
             }
         } catch (cause) {
             missionActionError.value =
@@ -150,17 +190,91 @@ export function useGame() {
         }
     }
 
+    async function buyItem(item: ShopItem): Promise<void> {
+        if (
+            !game.value ||
+            game.value.lives <= 0 ||
+            buyingItemId.value ||
+            solvingMissionId.value
+        ) {
+            return
+        }
+
+        if (game.value.gold < item.cost) {
+            shopMessage.value = 'You do not have enough gold to buy this item.'
+            return
+        }
+
+        const gameId = game.value.gameId
+
+        buyingItemId.value = item.id
+        shopError.value = ''
+        shopMessage.value = ''
+
+        try {
+            const result: ShopPurchaseResult = await gameApi.buyItem(
+                gameId,
+                item.id,
+            )
+
+            if (!game.value || game.value.gameId !== gameId) return
+
+            game.value = {
+                ...game.value,
+                gold: result.gold,
+                lives: result.lives,
+                level: result.level,
+                turn: result.turn,
+            }
+
+            if (result.shoppingSuccess) {
+                shopMessage.value = `${item.name} purchased successfully.`
+            } else {
+                shopMessage.value = `Could not purchase ${item.name}. Check your gold and try again.`
+            }
+
+            if (result.lives <= 0) {
+                missions.value = []
+                shopItems.value = []
+                missionsError.value = ''
+                shopError.value = ''
+            } else {
+                await Promise.all([
+                    loadMissions(gameId),
+                    loadShopItems(gameId),
+                ])
+            }
+        } catch (cause) {
+            shopError.value =
+                cause instanceof Error
+                    ? cause.message
+                    : 'Could not confirm the purchase.'
+        } finally {
+            buyingItemId.value = null
+        }
+    }
+
     async function resumeGame(): Promise<void> {
         if (game.value && game.value.lives > 0) {
-            await loadMissions(game.value.gameId)
+            await Promise.all([
+                loadMissions(game.value.gameId),
+                loadShopItems(game.value.gameId),
+            ])
         } else {
             missions.value = []
+            shopItems.value = []
         }
     }
 
     function retryMissions(): void {
         if (game.value && !missionsLoading.value && game.value.lives > 0) {
             void loadMissions(game.value.gameId)
+        }
+    }
+
+    function retryShop(): void {
+        if (game.value && !shopLoading.value && game.value.lives > 0) {
+            void loadShopItems(game.value.gameId)
         }
     }
 
@@ -171,8 +285,11 @@ export function useGame() {
     function endGame(): void {
         game.value = null
         missions.value = []
+        shopItems.value = []
         error.value = ''
         missionsError.value = ''
+        shopError.value = ''
+        shopMessage.value = ''
         missionOutcome.value = null
         missionActionError.value = ''
     }
@@ -180,18 +297,25 @@ export function useGame() {
     return {
         game,
         missions,
+        shopItems,
         loading,
         missionsLoading,
+        shopLoading,
+        buyingItemId,
         error,
         missionsError,
+        shopError,
+        shopMessage,
         solvingMissionId,
         missionOutcome,
         missionActionError,
         isGameOver,
         startGame,
         solveMission,
+        buyItem,
         resumeGame,
         retryMissions,
+        retryShop,
         clearError,
         endGame,
     }
