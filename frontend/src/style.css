@@ -1,285 +1,847 @@
 
+/* ========================================
+   Dragons of Mugloar — Global Styles
+   ======================================== */
+
+:root {
+  font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #f5f2e9;
+  background: #10131c;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  --color-background: #10131c;
+  --color-surface: #171a27;
+  --color-surface-raised: #202638;
+  --color-border: #353b50;
+  --color-gold: #e7b75c;
+  --color-gold-hover: #f4ca78;
+  --color-text: #f5f2e9;
+  --color-muted: #a6adbf;
+  --color-green: #70d6a0;
+  --color-red: #ff8585;
+
+  --radius-small: 10px;
+  --radius-medium: 16px;
+  --radius-large: 24px;
+}
+
+/* Reset */
+
 * {
   box-sizing: border-box;
 }
 
+html {
+  min-width: 320px;
+  min-height: 100%;
+  background: var(--color-background);
+}
+
 body {
-  margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #10131c;
-  color: #f5f2e9;
-  font-family: Inter, system-ui, sans-serif;
+  margin: 0;
+  background:
+          radial-gradient(
+                  ellipse at 50% 0%,
+                  rgba(75, 83, 120, 0.2),
+                  transparent 55%
+          ),
+          var(--color-background);
+  color: var(--color-text);
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 button {
   font: inherit;
 }
 
-.game-page {
-  width: min(100% - 32px, 1000px);
-  margin: 0 auto;
-  padding: 64px 0;
+button:focus-visible {
+  outline: 3px solid rgba(231, 183, 92, 0.7);
+  outline-offset: 3px;
 }
+
+#app {
+  width: 100%;
+  min-height: 100vh;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* ========================================
+   Main Page
+   ======================================== */
+
+.game-page {
+  width: 100%;
+  max-width: 1180px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 32px 24px 56px;
+}
+
+.game-page > section {
+  width: 100%;
+  min-width: 0;
+}
+
+/* ========================================
+   Hero / Header
+   ======================================== */
 
 .hero {
-  padding: 56px 24px;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 300px;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 32px;
+  padding: 52px 32px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-large);
+  background:
+          radial-gradient(
+                  ellipse at 50% 0%,
+                  rgba(231, 183, 92, 0.12),
+                  transparent 65%
+          ),
+          linear-gradient(135deg, #242b3e 0%, #171a27 100%);
   text-align: center;
-  background: linear-gradient(145deg, #242b3e, #171a27);
-  border: 1px solid #353b50;
-  border-radius: 24px;
 }
 
+.hero-content {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.hero-eyebrow,
 .eyebrow {
-  color: #e7b75c;
-  font-size: 12px;
+  margin: 0 0 12px;
+  color: var(--color-gold);
+  font-size: 0.75rem;
   font-weight: 800;
-  letter-spacing: 3px;
+  letter-spacing: 0.17em;
+  line-height: 1.5;
 }
 
-h1 {
-  margin: 18px 0;
-  font-size: clamp(34px, 6vw, 60px);
+.hero h1 {
+  margin: 0 0 18px;
+  color: var(--color-text);
+  font-size: clamp(2.1rem, 5vw, 3.6rem);
+  font-weight: 850;
   line-height: 1.1;
+  letter-spacing: -0.045em;
+  overflow-wrap: anywhere;
 }
 
-h1 span {
-  color: #e7b75c;
+.hero-content > p:not(.hero-eyebrow) {
+  max-width: 620px;
+  margin: 0 auto 28px;
+  color: var(--color-muted);
+  font-size: 1rem;
+  line-height: 1.75;
 }
 
-.subtitle {
-  color: #b8bdca;
-  line-height: 1.7;
+/* ========================================
+   Buttons
+   ======================================== */
+
+.primary-button,
+.secondary-button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  font-size: 0.92rem;
+  font-weight: 750;
+  line-height: 1.25;
+  text-align: center;
+  text-decoration: none;
+  transition:
+          background-color 160ms ease,
+          border-color 160ms ease,
+          color 160ms ease,
+          transform 160ms ease,
+          opacity 160ms ease;
+  cursor: pointer;
 }
 
-.start-button {
-  margin-top: 20px;
-  padding: 15px 26px;
-  border: 0;
-  border-radius: 10px;
-  background: #e7b75c;
-  color: #201a10;
+.primary-button {
+  border-color: var(--color-gold);
+  background: var(--color-gold);
+  color: #191711;
+}
+
+.primary-button:hover:not(:disabled) {
+  border-color: var(--color-gold-hover);
+  background: var(--color-gold-hover);
+  transform: translateY(-1px);
+}
+
+.primary-button:active:not(:disabled),
+.secondary-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.primary-button:disabled {
+  opacity: 0.6;
+  transform: none;
+}
+
+.secondary-button {
+  border-color: var(--color-border);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+.secondary-button:hover:not(:disabled) {
+  border-color: var(--color-gold);
+  background: #292f42;
+}
+
+.hero .start-game-button {
+  display: inline-flex;
+  width: auto;
+  min-width: 180px;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 26px;
+  border: 1px solid var(--color-gold);
+  border-radius: 12px;
+  background: var(--color-gold);
+  color: #191711;
+  font-size: 0.96rem;
   font-weight: 800;
   cursor: pointer;
 }
 
-.start-button:hover {
-  background: #f3ca7b;
+.hero .start-game-button:hover:not(:disabled) {
+  border-color: var(--color-gold-hover);
+  background: var(--color-gold-hover);
 }
 
-.start-button:disabled {
+.hero .start-game-button:disabled {
   opacity: 0.6;
-  cursor: wait;
+  cursor: not-allowed;
 }
 
-.dashboard {
-  margin-top: 32px;
-  padding: 28px;
-  border: 1px solid #353b50;
-  border-radius: 20px;
-  background: #191d29;
+/* ========================================
+   Dashboard
+   ======================================== */
+
+.dashboard-section {
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 38px;
 }
 
-.game-heading {
+.section-heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 20px;
+}
+
+.section-heading h2,
+.missions-section h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: clamp(1.35rem, 3vw, 1.8rem);
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+}
+
+.section-heading .eyebrow {
+  margin-bottom: 7px;
+}
+
+.status-pill {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid rgba(112, 214, 160, 0.25);
+  border-radius: 999px;
+  background: rgba(112, 214, 160, 0.09);
+  color: var(--color-green);
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+
+.status-pill::before {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  content: "";
+}
+
+.status-game-over {
+  border-color: rgba(255, 133, 133, 0.28);
+  background: rgba(255, 133, 133, 0.09);
+  color: var(--color-red);
+}
+
+/* ========================================
+   Statistics Cards
+   ======================================== */
+
+.stats-grid {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.stat-card {
+  display: flex;
+  min-width: 0;
+  min-height: 128px;
+  align-items: flex-start;
+  gap: 15px;
+  padding: 22px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: linear-gradient(
+          145deg,
+          rgba(32, 38, 56, 0.95),
+          rgba(23, 26, 39, 0.98)
+  );
+  transition:
+          border-color 160ms ease,
+          transform 160ms ease;
+}
+
+.stat-card:hover {
+  border-color: #515a75;
+  transform: translateY(-2px);
+}
+
+.stat-icon {
+  display: flex;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(231, 183, 92, 0.15);
+  border-radius: 12px;
+  background: rgba(231, 183, 92, 0.09);
+  font-size: 1.35rem;
+}
+
+.stat-info {
+  min-width: 0;
+}
+
+.stat-label {
+  display: block;
+  margin: 2px 0 8px;
+  color: var(--color-muted);
+  font-size: 0.83rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.stat-value {
+  display: block;
+  color: var(--color-text);
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 850;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 24px;
-}
-
-.game-heading h2 {
-  margin: 8px 0 0;
-}
-
-.status {
-  padding: 8px 12px;
-  border-radius: 20px;
-  background: #203a30;
-  color: #9ce1b7;
-  font-size: 13px;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 14px;
-}
-
-.stat-card {
-  padding: 20px;
-  border: 1px solid #353b50;
-  border-radius: 14px;
-  background: #222737;
-}
-
-.stat-card span {
-  display: block;
-  color: #b8bdca;
-  font-size: 14px;
-}
-
-.stat-card strong {
-  display: block;
-  margin-top: 12px;
-  font-size: 30px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(53, 59, 80, 0.75);
 }
 
 .game-id {
-  margin-top: 24px;
-  color: #9299aa;
-  font-size: 12px;
+  min-width: 0;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
   overflow-wrap: anywhere;
 }
 
-.error-message {
-  margin-top: 24px;
-  padding: 16px;
-  border: 1px solid #a94e4e;
-  border-radius: 10px;
-  background: #351f27;
-  color: #ffb7b7;
+.game-id strong {
+  color: var(--color-text);
 }
 
+/* ========================================
+   Mission Section
+   ======================================== */
 
-/* Missions section */
 .missions-section {
-  margin-top: 2.5rem;
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 32px;
 }
 
-.missions-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
+.missions-section > .section-heading {
+  margin-bottom: 22px;
 }
 
-.missions-heading h2 {
-  margin-top: 0.25rem;
-}
+/* Default: 2 columns */
 
-.mission-grid {
+.missions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1rem;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 18px;
 }
+
+/* 3 columns on standard laptops */
+
+@media (min-width: 900px) {
+  .missions-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* 4 columns on wider laptop and desktop screens */
+
+@media (min-width: 1400px) {
+  .game-page {
+    max-width: 1360px;
+  }
+
+  .missions-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* ========================================
+   Individual Mission Cards
+   ======================================== */
 
 .mission-card {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1.25rem;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.04);
+  height: 100%;
   min-width: 0;
+  flex-direction: column;
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: linear-gradient(
+          145deg,
+          rgba(32, 38, 56, 0.92),
+          rgba(23, 26, 39, 0.98)
+  );
+  transition:
+          border-color 160ms ease,
+          transform 160ms ease,
+          box-shadow 160ms ease;
 }
 
-.mission-card-heading {
+.mission-card:hover {
+  border-color: #515a75;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.mission-card-header {
   display: flex;
+  min-width: 0;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.mission-label,
-.mission-encrypted {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
 }
 
 .mission-label {
-  opacity: 0.7;
+  color: var(--color-gold);
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
 }
 
-.mission-encrypted {
-  padding: 0.3rem 0.55rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.encrypted-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border: 1px solid rgba(231, 183, 92, 0.25);
   border-radius: 999px;
+  background: rgba(231, 183, 92, 0.08);
+  color: var(--color-gold);
+  font-size: 0.72rem;
+  font-weight: 750;
 }
 
-.mission-description {
+/* Compact description spacing */
+
+.mission-message {
+  min-height: 75px;
+  margin: 0 0 18px;
+  color: var(--color-text);
+  font-size: 0.94rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+/* Mission rewards and probability */
+
+.mission-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 10px;
+  margin: auto 0 16px;
+}
+
+.mission-detail {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(53, 59, 80, 0.8);
+  border-radius: 11px;
+  background: rgba(16, 19, 28, 0.45);
+}
+
+/* Last odd-numbered detail, such as Estimated Probability, spans both columns */
+
+.mission-details > :last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+.detail-label {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--color-muted);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.mission-detail strong {
+  display: block;
+  color: var(--color-text);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.mission-id {
+  margin: auto 0 15px;
+  padding-top: 4px;
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.mission-card > .primary-button {
+  width: 100%;
+  margin-top: auto;
+}
+
+/* ========================================
+   Loading / Empty / Error States
+   ======================================== */
+
+.loading-message,
+.empty-message {
+  display: flex;
+  min-height: 150px;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-medium);
+  background: rgba(23, 26, 39, 0.65);
+  color: var(--color-muted);
+  text-align: center;
+  line-height: 1.65;
+}
+
+.loading-message {
+  position: relative;
+}
+
+.error-message {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 24px;
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 133, 133, 0.3);
+  border-radius: 12px;
+  background: rgba(255, 133, 133, 0.08);
+  color: #ffc0c0;
+  font-size: 0.9rem;
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
 
-.mission-details {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+.error-message p {
+  margin: 0 0 8px;
 }
 
-.mission-details span,
-.mission-probability span {
-  display: block;
-  margin-bottom: 0.4rem;
-  font-size: 0.8rem;
-  opacity: 0.7;
+.error-message p:last-child {
+  margin-bottom: 0;
 }
 
-.mission-details strong,
-.mission-probability strong {
-  display: block;
-  overflow-wrap: anywhere;
+.dismiss-button {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #ffc0c0;
+  font-size: 1.4rem;
+  cursor: pointer;
 }
 
-.mission-reward {
-  font-size: 1.1rem;
+.dismiss-button:hover {
+  border-color: rgba(255, 133, 133, 0.25);
+  background: rgba(255, 133, 133, 0.12);
 }
 
-.mission-probability {
-  padding: 0.75rem;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
+/* ========================================
+   Mission Outcome
+   ======================================== */
+
+.outcome-section {
+  margin: 0 0 28px;
 }
 
-.mission-id {
-  margin-top: auto;
-  font-size: 0.75rem;
-  opacity: 0.6;
-  overflow-wrap: anywhere;
-}
-
-.mission-message-state {
-  padding: 1.5rem 0;
-  opacity: 0.8;
-}
-
-.end-game-button {
-  margin-top: 1.5rem;
-}
-
-@media (max-width: 600px) {
-  .missions-heading {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-}
-
-
-.mission-action-button {
-  width: 100%;
-  margin-top: 0.25rem;
+.outcome-section > .eyebrow {
+  margin-bottom: 10px;
 }
 
 .mission-outcome {
-  margin: 1rem 0;
-  padding: 0.85rem 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  line-height: 1.5;
+  padding: 20px 22px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-surface);
+  color: var(--color-text);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
 }
 
-.mission-outcome--success {
-  border-color: rgba(80, 200, 120, 0.65);
+.mission-outcome.success,
+.mission-outcome.outcome-success {
+  border-color: rgba(112, 214, 160, 0.35);
+  background: rgba(112, 214, 160, 0.07);
 }
 
-.mission-outcome--failure {
-  border-color: rgba(240, 120, 100, 0.65);
+.mission-outcome.failure,
+.mission-outcome.outcome-failure {
+  border-color: rgba(255, 133, 133, 0.35);
+  background: rgba(255, 133, 133, 0.07);
 }
 
+/* ========================================
+   General Text / Links
+   ======================================== */
+
+a {
+  color: var(--color-gold);
+}
+
+a:hover {
+  color: var(--color-gold-hover);
+}
+
+p {
+  overflow-wrap: break-word;
+}
+
+::selection {
+  background: rgba(231, 183, 92, 0.3);
+  color: var(--color-text);
+}
+
+/* ========================================
+   Tablet
+   ======================================== */
+
+@media (max-width: 899px) {
+  .game-page {
+    padding: 24px 20px 40px;
+  }
+
+  .hero {
+    min-height: 270px;
+    padding: 42px 24px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stat-card {
+    padding: 19px;
+  }
+}
+
+/* ========================================
+   Mobile
+   ======================================== */
+
+@media (max-width: 600px) {
+  .game-page {
+    padding: 16px 12px 30px;
+  }
+
+  .hero {
+    min-height: auto;
+    margin-bottom: 28px;
+    padding: 36px 18px;
+    border-radius: 18px;
+  }
+
+  .hero h1 {
+    font-size: clamp(2rem, 9vw, 2.8rem);
+  }
+
+  .hero-content > p:not(.hero-eyebrow) {
+    font-size: 0.93rem;
+  }
+
+  .hero .start-game-button {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .section-heading h2,
+  .missions-section h2 {
+    font-size: 1.45rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .stat-card {
+    min-height: 110px;
+    flex-direction: column;
+    gap: 11px;
+    padding: 15px;
+  }
+
+  .stat-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
+  }
+
+  .stat-label {
+    font-size: 0.76rem;
+  }
+
+  .stat-value {
+    font-size: 1.55rem;
+  }
+
+  .dashboard-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .missions-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .mission-card {
+    padding: 14px;
+  }
+
+  .mission-message {
+    min-height: 0;
+    font-size: 0.88rem;
+  }
+
+  .mission-details {
+    gap: 8px;
+  }
+
+  .mission-detail {
+    padding: 9px;
+  }
+
+  .detail-label {
+    font-size: 0.7rem;
+  }
+
+  .mission-detail strong {
+    font-size: 0.82rem;
+  }
+
+  .error-message {
+    align-items: flex-start;
+    padding: 13px;
+  }
+
+  .outcome-section {
+    margin-bottom: 24px;
+  }
+}
+
+/* Very narrow mobile phones */
+
+@media (max-width: 420px) {
+  .missions-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Reduced motion accessibility */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
