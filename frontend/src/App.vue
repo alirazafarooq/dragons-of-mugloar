@@ -21,6 +21,17 @@ interface Mission {
   probability: string
 }
 
+interface MissionSolveResult {
+  success: boolean
+  message: string
+  lives: number
+  gold: number
+  score: number
+  highScore: number
+  turn: number
+}
+
+
 const API_BASE_URL = 'http://localhost:8080/api'
 const STORAGE_KEY = 'mugloar-game'
 
@@ -31,6 +42,17 @@ const error = ref('')
 const missions = ref<Mission[]>([])
 const missionsLoading = ref(false)
 const missionsError = ref('')
+
+
+const solvingMissionId = ref<string | null>(null)
+
+const missionOutcome = ref<{
+  success: boolean
+  message: string
+} | null>(null)
+
+const missionActionError = ref('')
+
 
 // Check that a value is a JSON object.
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -85,6 +107,30 @@ function isMission(value: unknown): value is Mission {
   )
 }
 
+function isMissionSolveResult(
+    value: unknown
+): value is MissionSolveResult {
+  if (!isRecord(value)) {
+    return false
+  }
+
+  return (
+      typeof value.success === 'boolean' &&
+      typeof value.message === 'string' &&
+      typeof value.lives === 'number' &&
+      Number.isFinite(value.lives) &&
+      typeof value.gold === 'number' &&
+      Number.isFinite(value.gold) &&
+      typeof value.score === 'number' &&
+      Number.isFinite(value.score) &&
+      typeof value.highScore === 'number' &&
+      Number.isFinite(value.highScore) &&
+      typeof value.turn === 'number' &&
+      Number.isFinite(value.turn)
+  )
+}
+
+
 // Read the structured error message returned by Spring Boot.
 async function getApiErrorMessage(response: Response): Promise<string> {
   const fallback =
@@ -119,12 +165,26 @@ onMounted(() => {
   try {
     const parsed: unknown = JSON.parse(savedGame)
 
+
     if (isGameState(parsed)) {
       game.value = parsed
-      void loadMissions(parsed.gameId)
+
+      if (parsed.lives > 0) {
+        void loadMissions(parsed.gameId)
+      } else {
+        // Restore the ended game without requesting new missions.
+        missions.value = []
+        missionsError.value = ''
+
+        missionOutcome.value = {
+          success: false,
+          message: 'This game has ended because no lives remain.',
+        }
+      }
     } else {
       localStorage.removeItem(STORAGE_KEY)
     }
+
   } catch {
     localStorage.removeItem(STORAGE_KEY)
   }
@@ -134,6 +194,8 @@ onMounted(() => {
 async function startGame() {
   loading.value = true
   error.value = ''
+  missionOutcome.value = null
+  missionActionError.value = ''
 
   try {
     const response = await fetch(`${API_BASE_URL}/games`, {
@@ -203,6 +265,89 @@ async function loadMissions(gameId: string) {
   }
 }
 
+
+async function solveMission(mission: Mission) {
+  if (!game.value || solvingMissionId.value !== null) {
+    return
+  }
+
+  const gameId = game.value.gameId
+
+  solvingMissionId.value = mission.adId
+  missionOutcome.value = null
+  missionActionError.value = ''
+
+  try {
+    const response = await fetch(
+        `${API_BASE_URL}/games/${encodeURIComponent(gameId)}/solve/${encodeURIComponent(mission.adId)}`,
+        {
+          method: 'POST',
+        }
+    )
+
+    if (!response.ok) {
+      throw new Error(await getApiErrorMessage(response))
+    }
+
+    const data: unknown = await response.json()
+
+    if (!isMissionSolveResult(data)) {
+      throw new Error(
+          'The backend returned an invalid mission result.'
+      )
+    }
+
+    if (!game.value || game.value.gameId !== gameId) {
+      return
+    }
+
+    // The solve response doesn't include gameId or level.
+    // Preserve those fields and update the returned statistics.
+    const updatedGame: GameState = {
+      ...game.value,
+      lives: data.lives,
+      gold: data.gold,
+      score: data.score,
+      highScore: data.highScore,
+      turn: data.turn,
+    }
+
+    game.value = updatedGame
+
+    // Persist the updated game so a browser refresh restores it.
+    localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(updatedGame)
+    )
+
+
+    // A failed mission is still a completed attempt.
+    missionOutcome.value = {
+      success: data.success,
+      message: data.message,
+    }
+
+    // Only fetch missions if the game is still active.
+    if (updatedGame.lives > 0) {
+      await loadMissions(gameId)
+    } else {
+      // The game has ended. Do not call the missions API again.
+      missions.value = []
+      missionsError.value = ''
+    }
+
+  } catch (e) {
+    missionActionError.value = e instanceof Error
+        ? e.message
+        : 'An unexpected error occurred while attempting the mission.'
+
+    console.error('Mission attempt failed:', e)
+  } finally {
+    solvingMissionId.value = null
+  }
+}
+
+
 // Retry only when loading missions fails.
 function retryMissions() {
   if (game.value && !missionsLoading.value) {
@@ -218,6 +363,8 @@ function endGame() {
   missions.value = []
   error.value = ''
   missionsError.value = ''
+  missionOutcome.value = null
+  missionActionError.value = ''
 }
 </script>
 
@@ -294,16 +441,55 @@ function endGame() {
           <div>
             <p class="eyebrow">CHOOSE YOUR CHALLENGE</p>
             <h2>Available Missions</h2>
+
+            <p
+                v-if="missionOutcome"
+                class="mission-outcome"
+                :class="{
+    'mission-outcome--success': missionOutcome.success,
+    'mission-outcome--failure': !missionOutcome.success
+  }"
+                role="status"
+            >
+              {{ missionOutcome.message }}
+            </p>
+
+            <div
+                v-if="missionActionError"
+                class="error-message"
+                role="alert"
+            >
+              <p>
+                Mission attempt could not be confirmed:
+                {{ missionActionError }}
+              </p>
+              <p>
+                Check the game before attempting another mission, because the
+                original request may have reached the external service.
+              </p>
+            </div>
+
           </div>
         </div>
 
+
         <p
-            v-if="missionsLoading"
+            v-if="game.lives <= 0"
+            class="mission-message-state"
+            role="status"
+        >
+          Your adventure has ended. You have no lives remaining.
+          Start a new game to play again.
+        </p>
+
+        <p
+            v-else-if="missionsLoading"
             class="mission-message-state"
             role="status"
         >
           Looking for available missions...
         </p>
+
 
         <div
             v-else-if="missionsError"
@@ -373,6 +559,23 @@ function endGame() {
 
             <p class="mission-id">
               Mission ID: {{ mission.adId }}
+
+              <button
+                  class="start-button mission-action-button"
+                  :disabled="
+    solvingMissionId !== null ||
+    missionsLoading ||
+    game.lives <= 0
+  "
+                  @click="solveMission(mission)"
+              >
+                {{
+                  solvingMissionId === mission.adId
+                      ? 'Attempting Mission...'
+                      : 'Attempt Mission'
+                }}
+              </button>
+
             </p>
           </article>
         </div>

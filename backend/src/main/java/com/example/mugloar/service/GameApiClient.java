@@ -3,6 +3,8 @@ package com.example.mugloar.service;
 
 import com.example.mugloar.model.GameState;
 import com.example.mugloar.model.Mission;
+import com.example.mugloar.model.MissionSolveResult;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -69,6 +71,35 @@ public class GameApiClient {
 
         return missions;
     }
+
+
+    public MissionSolveResult solveMission(String gameId, String adId) {
+        MissionSolveResult result = callExternalApi(
+                "solve mission",
+                () -> restClient.post()
+                        .uri("/{gameId}/solve/{adId}", gameId, adId)
+                        .retrieve()
+                        .body(MissionSolveResult.class)
+        );
+
+        if (result == null
+                || result.success() == null
+                || result.message() == null
+                || result.lives() == null
+                || result.gold() == null
+                || result.score() == null
+                || result.highScore() == null
+                || result.turn() == null) {
+
+            throw new GameApiException(
+                    org.springframework.http.HttpStatus.BAD_GATEWAY,
+                    "External game service returned an incomplete mission result."
+            );
+        }
+
+        return result;
+    }
+
 
     private <T> T callExternalApi(
             String operation,

@@ -15,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.mugloar.model.Mission;
+import com.example.mugloar.model.MissionSolveResult;
 
 import java.util.List;
 
@@ -77,6 +78,36 @@ class GameControllerTest {
 
         verifyNoInteractions(gameApiClient);
     }
+
+    @Test
+    void solveMissionReturnsResult() throws Exception {
+        MissionSolveResult result = new MissionSolveResult(
+                true,
+                "You successfully solved the mission!",
+                3,
+                13,
+                13,
+                0,
+                1
+        );
+
+        when(gameApiClient.solveMission("S1efis2P", "N0SjIYKD"))
+                .thenReturn(result);
+
+        mockMvc.perform(
+                        post("/api/games/S1efis2P/solve/N0SjIYKD")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message")
+                        .value("You successfully solved the mission!"))
+                .andExpect(jsonPath("$.lives").value(3))
+                .andExpect(jsonPath("$.gold").value(13))
+                .andExpect(jsonPath("$.score").value(13))
+                .andExpect(jsonPath("$.highScore").value(0))
+                .andExpect(jsonPath("$.turn").value(1));
+    }
+
 
 
 }
