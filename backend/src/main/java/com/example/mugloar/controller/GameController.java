@@ -150,8 +150,8 @@ public class GameController {
             @Parameter(description = "ID of the mission to attempt", example = "N0SjIYKD")
             @PathVariable
             @Pattern(
-                    regexp = "^[A-Za-z0-9_-]{1,64}$",
-                    message = "Mission ID must contain only letters, digits, underscores, or hyphens and be 1–64 characters long."
+                    regexp = "^[A-Za-z0-9_+/=\\-]{1,64}$",
+                    message = "Mission ID must contain only valid Base64 or URL-safe identifier characters and be 1–64 characters long."
             )
             String adId
     ) {

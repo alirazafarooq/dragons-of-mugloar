@@ -72,7 +72,9 @@ public class GameApiClient {
             );
         }
 
-        return missions;
+        return missions.stream()
+                .map(MissionDecoder::decode)
+                .toList();
     }
 
 
