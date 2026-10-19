@@ -4,6 +4,7 @@ import { gameApi } from '../services/gameApi'
 import type { GameState } from '../types/game'
 import type { Mission, MissionSolveResult } from '../types/mission'
 import type { ShopItem, ShopPurchaseResult } from '../types/shop'
+import { chooseAutoplayAction } from '../services/missionStrategy'
 
 const STORAGE_KEY = 'mugloar-game'
 
@@ -55,8 +56,10 @@ export function useGame() {
     const missionActionError = ref('')
 
     const isGameOver = computed(
-        () => game.value !== null && game.value.lives <= 0,
-    )
+        () => game.value !== null && game.value.lives <= 0)
+
+    const autoplayRunning = ref(false)
+    const autoplayStatus = ref('Autoplay is off.')
 
     watch(
         game,
@@ -138,9 +141,9 @@ export function useGame() {
         }
     }
 
-    async function solveMission(mission: Mission): Promise<void> {
+    async function solveMission(mission: Mission): Promise<boolean> {
         if (!game.value || game.value.lives <= 0 || solvingMissionId.value) {
-            return
+            return false
         }
 
         const gameId = game.value.gameId
@@ -156,7 +159,7 @@ export function useGame() {
                 mission.adId,
             )
 
-            if (!game.value || game.value.gameId !== gameId) return
+            if (!game.value || game.value.gameId !== gameId) return false
 
             game.value = {
                 ...game.value,
@@ -180,29 +183,33 @@ export function useGame() {
                 missionsError.value = ''
                 shopError.value = ''
             }
+            return true
         } catch (cause) {
             missionActionError.value =
                 cause instanceof Error
                     ? cause.message
                     : 'Could not confirm the mission attempt.'
+
+            return true
+
         } finally {
             solvingMissionId.value = null
         }
     }
 
-    async function buyItem(item: ShopItem): Promise<void> {
+    async function buyItem(item: ShopItem): Promise<boolean> {
         if (
             !game.value ||
             game.value.lives <= 0 ||
             buyingItemId.value ||
             solvingMissionId.value
         ) {
-            return
+            return false
         }
 
         if (game.value.gold < item.cost) {
             shopMessage.value = 'You do not have enough gold to buy this item.'
-            return
+            return false
         }
 
         const gameId = game.value.gameId
@@ -217,7 +224,7 @@ export function useGame() {
                 item.id,
             )
 
-            if (!game.value || game.value.gameId !== gameId) return
+            if (!game.value || game.value.gameId !== gameId) return false
 
             game.value = {
                 ...game.value,
@@ -244,13 +251,167 @@ export function useGame() {
                     loadShopItems(gameId),
                 ])
             }
+
+            return true
+
         } catch (cause) {
             shopError.value =
                 cause instanceof Error
                     ? cause.message
                     : 'Could not confirm the purchase.'
+
+            return false
+
         } finally {
             buyingItemId.value = null
+        }
+    }
+
+
+    function stopAutoplay(reason: string): void {
+        autoplayRunning.value = false
+        autoplayStatus.value = reason
+    }
+
+    function pauseAutoplay(): void {
+        if (!autoplayRunning.value) return
+
+        stopAutoplay('Autoplay paused.')
+    }
+
+    function takeManualControl(): void {
+        stopAutoplay('Manual control selected.')
+    }
+
+    async function startAutoplay(): Promise<void> {
+        if (
+            autoplayRunning.value ||
+            !game.value ||
+            game.value.lives <= 0
+        ) {
+            return
+        }
+
+        if (
+            solvingMissionId.value ||
+            buyingItemId.value ||
+            loading.value
+        ) {
+            autoplayStatus.value =
+                'Wait for the current action to finish before starting autoplay.'
+            return
+        }
+
+        autoplayRunning.value = true
+        autoplayStatus.value = 'Autoplay is running.'
+
+        while (autoplayRunning.value) {
+            const currentGame = game.value
+
+            if (!currentGame || currentGame.lives <= 0) {
+                stopAutoplay('Game over: no lives remaining.')
+                break
+            }
+
+            if (missionActionError.value || shopError.value) {
+                stopAutoplay(
+                    'Autoplay stopped because an action could not be confirmed.',
+                )
+                break
+            }
+
+            if (missionsError.value || missionsLoading.value || shopLoading.value) {
+                stopAutoplay(
+                    'Autoplay stopped because missions or shop data could not be verified.',
+                )
+                break
+            }
+
+            const action = chooseAutoplayAction(
+                currentGame,
+                missions.value,
+                shopItems.value,
+            )
+
+            if (action.type === 'stop') {
+                stopAutoplay(action.reason)
+                break
+            }
+
+            const previousTurn = currentGame.turn
+            const previousLives = currentGame.lives
+
+            if (action.type === 'solve') {
+                const confirmed = await solveMission(action.mission)
+
+                if (!autoplayRunning.value) break
+
+                if (!confirmed) {
+                    stopAutoplay(
+                        'Autoplay stopped because the mission action failed or could not be confirmed.',
+                    )
+                    break
+                }
+
+                if (
+                    missionActionError.value ||
+                    missionsError.value ||
+                    shopError.value
+                ) {
+                    stopAutoplay(
+                        'Autoplay stopped because the latest game state could not be verified.',
+                    )
+                    break
+                }
+
+                if (
+                    !game.value ||
+                    game.value.turn <= previousTurn ||
+                    game.value.lives < 0
+                ) {
+                    stopAutoplay(
+                        'Autoplay stopped because the game state did not advance as expected.',
+                    )
+                    break
+                }
+            }
+
+            if (action.type === 'buy') {
+                const confirmed = await buyItem(action.item)
+
+                if (!autoplayRunning.value) break
+
+                if (!confirmed) {
+                    stopAutoplay(
+                        'Autoplay stopped because the purchase failed.',
+                    )
+                    break
+                }
+
+                if (
+                    shopError.value ||
+                    missionsError.value
+                ) {
+                    stopAutoplay(
+                        'Autoplay stopped because the latest game state could not be verified.',
+                    )
+                    break
+                }
+
+                if (!game.value || game.value.turn <= previousTurn) {
+                    stopAutoplay(
+                        'Autoplay stopped because the purchase did not advance the game state.',
+                    )
+                    break
+                }
+
+                if (game.value.lives <= previousLives) {
+                    stopAutoplay(
+                        'Autoplay stopped because the healing purchase did not restore a life.',
+                    )
+                    break
+                }
+            }
         }
     }
 
@@ -318,5 +479,10 @@ export function useGame() {
         retryShop,
         clearError,
         endGame,
+        autoplayRunning,
+        autoplayStatus,
+        startAutoplay,
+        pauseAutoplay,
+        takeManualControl,
     }
 }

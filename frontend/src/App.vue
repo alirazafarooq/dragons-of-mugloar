@@ -7,6 +7,7 @@ import MissionList from './components/MissionList.vue'
 import MissionOutcome from './components/MissionOutcome.vue'
 import { useGame } from './composables/useGame'
 import ShopPanel from './components/ShopPanel.vue'
+import AutoplayPanel from './components/AutoplayPanel.vue'
 
 const {
   game,
@@ -32,6 +33,11 @@ const {
   shopMessage,
   buyItem,
   retryShop,
+  autoplayRunning,
+  autoplayStatus,
+  startAutoplay,
+  pauseAutoplay,
+  takeManualControl,
 } = useGame()
 
 onMounted(() => {
@@ -62,6 +68,15 @@ function handleSolveMission(adId: string) {
 
     <section v-if="game">
       <GameDashboard :game="game" @end="endGame" />
+
+      <AutoplayPanel
+          :running="autoplayRunning"
+          :status="autoplayStatus"
+          :disabled="loading || isGameOver"
+          @start="startAutoplay"
+          @pause="pauseAutoplay"
+          @manual="takeManualControl"
+      />
 
       <section v-if="missionOutcome" class="outcome-section">
         <p class="eyebrow">MISSION RESULT</p>
