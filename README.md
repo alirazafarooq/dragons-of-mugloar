@@ -79,7 +79,7 @@ dragons-of-mugloar/
 │   │   ├── App.vue
 │   │   ├── main.ts
 │   │   └── style.css
-│   ├── .env.sample
+│   ├── env.sample
 │   └── package.json
 ├── .gitignore
 └── README.md
@@ -136,20 +136,20 @@ npm.cmd install
 
 The frontend uses `VITE_API_BASE_URL` to configure the backend API base URL.
 
-A sample environment configuration is provided in `frontend/.env.sample`.
+A sample environment configuration is provided in `frontend/env.sample`.
 
 Create a `.env.development` file from the sample file.
 
 **Windows PowerShell:**
 
 ```powershell
-Copy-Item .env.sample .env.development
+Copy-Item env.sample .env.development
 ```
 
 **Windows Command Prompt (CMD):**
 
 ```cmd
-copy .env.sample .env.development
+copy env.sample .env.development
 ```
 
 Open `frontend/.env.development` and ensure it contains:
@@ -175,7 +175,7 @@ Open the application at:
 - Run the frontend commands from the `frontend` directory.
 - Vite automatically loads `.env.development` when running the development server with `npm run dev`.
 - Restart the Vite development server after changing environment variables.
-- Keep `.env.sample` in version control so other developers can use it as a template.
+- Keep `env.sample` in version control so other developers can use it as a template.
 - Keep `.env.development` out of version control if it is intended for local configuration. Check `.gitignore` to ensure it is excluded.
 - Environment variables prefixed with `VITE_` are exposed to frontend code. Do not store secrets or private credentials in them.
 
