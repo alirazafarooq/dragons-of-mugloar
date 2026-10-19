@@ -4,7 +4,7 @@ A full-stack web application for playing the Dragons of Mugloar strategy game. I
 
 The project demonstrates REST API integration, frontend state management, automated testing, error handling, and a heuristic-based autoplay strategy that can be extended as more information about the game becomes available.
 
-**Repository:** https://github.com/alirazafarooq/dragons-of-mugloar
+**Repository:** [https://github.com/alirazafarooq/dragons-of-mugloar](https://github.com/alirazafarooq/dragons-of-mugloar)
 
 ## Table of Contents
 
@@ -79,6 +79,7 @@ dragons-of-mugloar/
 │   │   ├── App.vue
 │   │   ├── main.ts
 │   │   └── style.css
+│   ├── .env.sample
 │   └── package.json
 ├── .gitignore
 └── README.md
@@ -115,13 +116,53 @@ The backend runs at:
 
 `http://localhost:8080`
 
-### 3. Start the frontend
+### 3. Configure and start the frontend
 
-Open a second terminal in the project root:
+Open a **second terminal** in the project root.
+
+Navigate to the frontend directory:
 
 ```powershell
 cd frontend
+```
+
+Install the frontend dependencies:
+
+```powershell
 npm.cmd install
+```
+
+#### Configure environment variables
+
+The frontend uses `VITE_API_BASE_URL` to configure the backend API base URL.
+
+A sample environment configuration is provided in `frontend/.env.sample`.
+
+Create a `.env.development` file from the sample file.
+
+**Windows PowerShell:**
+
+```powershell
+Copy-Item .env.sample .env.development
+```
+
+**Windows Command Prompt (CMD):**
+
+```cmd
+copy .env.sample .env.development
+```
+
+Open `frontend/.env.development` and ensure it contains:
+
+```env
+VITE_API_BASE_URL=http://localhost:8080/api
+```
+
+This configures the frontend to send API requests to the local Spring Boot backend.
+
+Start the frontend development server:
+
+```powershell
 npm.cmd run dev
 ```
 
@@ -129,9 +170,18 @@ Open the application at:
 
 `http://localhost:5173`
 
-The frontend communicates with the backend through the `/api` proxy configured in Vite.
+**Environment configuration notes:**
 
-### Configuration
+- Run the frontend commands from the `frontend` directory.
+- Vite automatically loads `.env.development` when running the development server with `npm run dev`.
+- Restart the Vite development server after changing environment variables.
+- Keep `.env.sample` in version control so other developers can use it as a template.
+- Keep `.env.development` out of version control if it is intended for local configuration. Check `.gitignore` to ensure it is excluded.
+- Environment variables prefixed with `VITE_` are exposed to frontend code. Do not store secrets or private credentials in them.
+
+The frontend communicates with the backend through the `/api` proxy configured in Vite. Ensure the Vite proxy configuration and `VITE_API_BASE_URL` are consistent with the frontend API service implementation.
+
+### Backend Configuration
 
 The external API base URL and frontend URL are configured in the backend's `application.properties` file:
 
@@ -140,11 +190,13 @@ dragons.api.base-url=https://dragonsofmugloar.com/api/v2
 app.frontend.url=http://localhost:5173
 ```
 
+The backend uses the external API base URL to communicate with the Dragons of Mugloar game service.
+
 ## API Documentation
 
 When the backend is running, open Swagger UI:
 
-`http://localhost:8080/swagger-ui/index.html`
+[http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
 
 The backend provides endpoints for creating games, retrieving missions, solving missions, retrieving shop items, and purchasing items.
 
@@ -154,8 +206,8 @@ Some mission fields returned by the external game API are encoded. The backend d
 
 Supported encodings include:
 
-- **Base64 (`encrypted: "1"`):** Decodes mission descriptions and probability labels.
-- **ROT13 (`encrypted: "2"`):** Transforms mission descriptions and probability labels using ROT13.
+- **Base64 (`encrypted: "1"`):** Decodes encoded mission data.
+- **ROT13 (`encrypted: "2"`):** Transforms encoded mission text using ROT13.
 
 The current implementation also decodes the mission identifier where required by the mission-solving flow. The frontend displays the decoded data supplied by the backend.
 
@@ -175,9 +227,9 @@ Autoplay uses the strategy implemented in:
 
 The strategy evaluates the current game state, available missions, and shop items. It returns one of three action types:
 
-- **Stop:** Stop when no lives remain or no missions are available.
-- **Buy:** Purchase an affordable healing potion when the healing conditions are met.
-- **Solve:** Select the best-ranked available mission.
+- **Stop:** Stops when no lives remain or no missions are available.
+- **Buy:** Purchases an affordable healing potion when the healing conditions are met.
+- **Solve:** Selects the best-ranked available mission.
 
 After an action, the controller refreshes game-related data and checks the result before continuing. It stops when an action fails, the resulting state cannot be verified, or another stopping condition is reached.
 
@@ -234,7 +286,7 @@ These are observed results, not a guarantee that every game will achieve the sam
 
 The risk model is a heuristic rather than a verified probability model. Risk scores rank missions for selection; they do not directly calculate the probability of success.
 
-For example, the strategy may assume that a `Walk in the park` mission with a particular reward is likely to succeed. A success rate such as 98% can be used as an illustrative working assumption when discussing the strategy, but it is not a measured probability supplied by the game API or calculated by the current code.
+For example, the strategy may assume that a `Walk in the park` mission is a relatively safe choice. A success rate such as 98% can be used as an illustrative working assumption when discussing the strategy, but it is not a measured probability supplied by the game API or calculated by the current code.
 
 The distinction is important:
 
@@ -242,7 +294,7 @@ The distinction is important:
 - **Assumed success rate:** A hypothetical percentage that may help describe the intended interpretation of a probability label.
 - **Observed success rate:** A percentage calculated from actual recorded mission outcomes.
 
-The current implementation uses the first of these. The illustrative percentages should not be interpreted as measured or guaranteed success rates.
+The current implementation uses the first of these. Illustrative percentages should not be interpreted as measured or guaranteed success rates.
 
 ### Shop-Product Assumptions
 
@@ -296,19 +348,6 @@ Frontend tests cover areas including:
 - Game-over handling and healing decisions.
 
 Vitest and Vue Test Utils are used for frontend testing.
-
-### Production Build
-
-Run from the project root:
-
-```powershell
-cd frontend
-npm.cmd run build
-```
-
-The production build checks frontend compilation and bundling.
-
-The backend tests, frontend tests, and frontend production build have passed during development. Numerical code-coverage percentages have not been measured or reported in this README. The test descriptions above identify the areas exercised by the existing tests and do not claim complete coverage of every code path.
 
 ## Known Limitations
 
